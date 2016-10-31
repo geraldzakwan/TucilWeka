@@ -7,18 +7,25 @@ package tucilweka;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Random;
 
 import weka.core.*;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.ConverterUtils.DataSource;
+import weka.classifiers.Evaluation;
+import weka.classifiers.trees.J48;
+
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Discretize;
 
 import java.util.Scanner;
+import weka.classifiers.Classifier;
 
 /**
  *
@@ -29,6 +36,11 @@ public class TucilWeka {
     DataSource dataSource;
     Instances inputDataSet;
     Instances outputDataSet;
+    Classifier j48Classifier;
+    
+    public TucilWeka() {
+        j48Classifier = new J48();
+    }
     
     public void loadData() throws FileNotFoundException {
 //        String loadFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/iris.arff";
@@ -37,7 +49,7 @@ public class TucilWeka {
             dataSource = new DataSource(loadFilePath);
             inputDataSet = dataSource.getDataSet();
             inputDataSet.setClassIndex(inputDataSet.numAttributes() - 1);
-            
+
             //Ini kalo instances langsung
             //Instances inputDataSet = new Instances(new BufferedReader(new FileReader(loadFilePath)));            
             
@@ -100,11 +112,47 @@ public class TucilWeka {
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-        
-       
     }
     
+    /*
+        Function to train the classifiers
+    */
+    public void train() {
+        try {
+            j48Classifier.buildClassifier(inputDataSet);
+        } catch (Exception ex) {
+            Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public void tenFoldEvaluation () {
+        try {
+            J48 tree = new J48();
+            
+            Evaluation eval = new Evaluation(inputDataSet);
+            eval.crossValidateModel(tree, inputDataSet, 10, new Random(1));
+            System.out.println(eval.toSummaryString());
+        } catch (Exception ex) {
+            Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public void fullTrainingEvaluation () {
+        try {
+            Instances test = inputDataSet;
+            
+            Evaluation eval = new Evaluation(inputDataSet);
+            
+            eval.evaluateModel(j48Classifier, test);
+            System.out.println(eval.toSummaryString("\nResults\n======\n", false));
+        } catch (Exception ex) {
+            Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    } 
+    
+    /*
+       Function to request a new instances from user using System.in
+    */
     public Instance askInstancesFromUser() {
         int nAttributes = inputDataSet.numAttributes();
         Instance inst = new DenseInstance(nAttributes);
@@ -125,19 +173,21 @@ public class TucilWeka {
         return inst;
     }
     
+    
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         // TODO code application logic here
         TucilWeka test = new TucilWeka();
         
         try {
             test.loadData();
-            Instance i = test.askInstancesFromUser();
-            
-            System.out.println(i);
+
             test.discretizeData();
+            
+            test.train();
+            
             //pilih either fulltraining atau 10-fold
             
             //buat hipotesis
