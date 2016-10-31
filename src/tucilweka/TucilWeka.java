@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import weka.core.*;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.ConverterUtils.DataSource;
@@ -28,14 +29,18 @@ public class TucilWeka {
     DataSource dataSource;
     Instances inputDataSet;
     Instances outputDataSet;
-
+    
     public void loadData() throws FileNotFoundException {
-        String loadFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/iris.arff";
+//        String loadFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/iris.arff";
+        String loadFilePath = "iris.arff";
         try {
             dataSource = new DataSource(loadFilePath);
             inputDataSet = dataSource.getDataSet();
+            inputDataSet.setClassIndex(inputDataSet.numAttributes() - 1);
+            
             //Ini kalo instances langsung
             //Instances inputDataSet = new Instances(new BufferedReader(new FileReader(loadFilePath)));            
+            
             System.out.println(inputDataSet.toSummaryString());
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
@@ -45,7 +50,8 @@ public class TucilWeka {
     public void saveData() {
         ArffSaver aSaver = new ArffSaver();
         aSaver.setInstances(outputDataSet);
-        String saveFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/saved.arff";
+//        String saveFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/saved.arff";
+        String saveFilePath = "saved.arff";
         try {
             aSaver.setFile(new File(saveFilePath));
             aSaver.writeBatch();
@@ -64,16 +70,20 @@ public class TucilWeka {
         s3 = "-M";
         
         String v1 = "", v2 = "", v3 = "";
-        Scanner sc = new Scanner(System.in);
+//        Scanner sc = new Scanner(System.in);
         
-        System.out.print("-R : ");
-        v1 = sc.nextLine();
-        
-        System.out.print("-B : ");
-        v2 = sc.nextLine();
-        
-        System.out.print("-M : ");
-        v3 = sc.nextLine();
+//        System.out.print("-R : ");
+//        v1 = sc.nextLine();
+//        
+//        System.out.print("-B : ");
+//        v2 = sc.nextLine();
+//        
+//        System.out.print("-M : ");
+//        v3 = sc.nextLine();
+
+        v1 = "first-last";
+        v2 = "10";
+        v3 = "-1";
         
         settings[0] = s1;
         settings[1] = v1;
@@ -94,16 +104,52 @@ public class TucilWeka {
         
        
     }
+    
+    public Instance askInstancesFromUser() {
+        int nAttributes = inputDataSet.numAttributes();
+        Instance inst = new DenseInstance(nAttributes);
+        Scanner s = new Scanner(System.in);
+        String in;
+        System.out.println(nAttributes);
+        
+        for (int i = 1; i <= nAttributes - 1; i++) {
+            Attribute a = inputDataSet.attribute(i - 1);
+            in = s.nextLine();
+            if (a.isNominal()) { //predetermined nominal, ex: full, empty, some
+                inst.setValue(a, in);
+            } else if (a.isNumeric()) { //real values, ex: 5.2, 3.1
+                inst.setValue(a, Float.parseFloat(in));
+            }
+        }
+        
+        return inst;
+    }
+    
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         // TODO code application logic here
-        System.out.println("import working");
         TucilWeka test = new TucilWeka();
+        
         try {
             test.loadData();
+            Instance i = test.askInstancesFromUser();
+            
+            System.out.println(i);
             test.discretizeData();
+            //pilih either fulltraining atau 10-fold
+            
+            //buat hipotesis
+            
+            //tampilin hipotesis
+            
+            //simpan hipotesis
+            
+            //baca instans baru
+            
+            //klasifikasi
+            
             test.saveData();
         } catch (FileNotFoundException ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
