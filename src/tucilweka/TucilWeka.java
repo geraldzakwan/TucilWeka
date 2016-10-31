@@ -55,50 +55,32 @@ public class TucilWeka {
     }
     
     public void discretizeData() {
-        String s1 = "", s2 = "", s3 = "", s4 = "", s5 = "";
-        Scanner sc = new Scanner(System.in);
-        
-        /*
-        System.out.print("-B, -M , or -O : ");
-        s1 = sc.nextLine();
-        */
-        s1 = "-B";
-        
-        if ("-B".equals(s1)) {
-            System.out.print("How many bins : ");
-            s2 = sc.nextLine();
-        }
-        
-        System.out.print("List of columns : ");
-        s3 = sc.nextLine();
-                
-        /*
-        System.out.print("-F (yes/no) : ");
-        String s4 = sc.nextLine();
-        
-        System.out.print("-V (yes/no) : ");
-        String s5 = sc.nextLine();
-        */
-        
-        int numberOfSettings;
-        if("-B".equals(s1)) {
-            numberOfSettings = 4;
-        } else {
-            numberOfSettings = 3;
-        }
-        
+        int numberOfSettings = 3;
+        numberOfSettings*=2;
         String[] settings = new String[numberOfSettings];
         
-        if ("-B".equals(s1)) {
-            settings[0] = s1;
-            settings[1] = s2;
-            settings[2] = "-R";
-            settings[3] = s3;
-        } else {
-            
-        }
+        String s1 = "-R", 
+        s2 = "-B", 
+        s3 = "-M";
         
-       
+        String v1 = "", v2 = "", v3 = "";
+        Scanner sc = new Scanner(System.in);
+        
+        System.out.print("-R : ");
+        v1 = sc.nextLine();
+        
+        System.out.print("-B : ");
+        v2 = sc.nextLine();
+        
+        System.out.print("-M : ");
+        v3 = sc.nextLine();
+        
+        settings[0] = s1;
+        settings[1] = v1;
+        settings[2] = s2;
+        settings[3] = v2;
+        settings[4] = s3;
+        settings[5] = v3;
         
         Discretize disc = new Discretize();
         try {
