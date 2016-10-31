@@ -4,10 +4,6 @@
  * and open the template in the editor.
  */
 package tucilweka;
-import weka.*;
-
-import weka.core.Instances;
-import weka.core.converters.ArffSaver;
 
 import java.io.File;
 import java.io.FileReader;
@@ -17,6 +13,10 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import weka.core.Instances;
+import weka.core.converters.ArffSaver;
+import weka.core.converters.ConverterUtils.DataSource;
+
 /**
  *
  * @author Geraldi Dzakwan
@@ -24,11 +24,21 @@ import java.util.logging.Logger;
 public class TucilWeka {
 
     public void loadAndSaveData() throws FileNotFoundException {
+        String loadFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/iris.arff";
         try {
-            String filepath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/iris.arff";
-            Instances newDataSet = new Instances(new BufferedReader(new FileReader(filepath)));
+            DataSource ds = new DataSource(loadFilePath);
+            Instances newDataSet = ds.getDataSet();
+            //Ini kalo instances langsung
+            //Instances newDataSet = new Instances(new BufferedReader(new FileReader(loadFilePath)));            
+
             System.out.println(newDataSet.toSummaryString());
-        } catch (IOException ex) {
+
+            ArffSaver aSaver = new ArffSaver();
+            aSaver.setInstances(newDataSet);
+            String saveFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/saved.arff";
+            aSaver.setFile(new File(saveFilePath));
+            aSaver.writeBatch();
+        } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
     }    
