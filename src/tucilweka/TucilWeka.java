@@ -173,6 +173,22 @@ public class TucilWeka {
         return inst;
     }
     
+    public void saveModels(String path) {
+        try {
+            SerializationHelper.write(path, j48Classifier);
+        } catch (Exception ex) {
+            Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public void loadModels(String path) {
+        try {
+            j48Classifier = (Classifier) weka.core.SerializationHelper.read(path);
+        } catch (Exception ex) {
+            Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
     
     /**
      * @param args the command line arguments
