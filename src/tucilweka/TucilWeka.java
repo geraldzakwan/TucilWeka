@@ -189,6 +189,14 @@ public class TucilWeka {
         }
     }
     
+    public void classifyInstance(Instance inst) {
+        try {
+            double classLabel = j48Classifier.classifyInstance(inst);
+            inst.setClassValue(classLabel);
+        } catch (Exception ex) {
+            Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
     
     /**
      * @param args the command line arguments
