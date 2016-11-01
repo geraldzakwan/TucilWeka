@@ -42,9 +42,9 @@ public class TucilWeka {
         j48Classifier = new J48();
     }
     
-    public void loadData() throws FileNotFoundException {
+    public void loadData(String loadFilePath) throws FileNotFoundException {
 //        String loadFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/iris.arff";
-        String loadFilePath = "iris.arff";
+        //String loadFilePath = "iris.arff";
         try {
             dataSource = new DataSource(loadFilePath);
             inputDataSet = dataSource.getDataSet();
@@ -59,11 +59,11 @@ public class TucilWeka {
         }
     }
     
-    public void saveData() {
+    public void saveData(String saveFilePath) {
         ArffSaver aSaver = new ArffSaver();
         aSaver.setInstances(outputDataSet);
 //        String saveFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/saved.arff";
-        String saveFilePath = "saved.arff";
+        //String saveFilePath = "saved.arff";
         try {
             aSaver.setFile(new File(saveFilePath));
             aSaver.writeBatch();
@@ -119,7 +119,7 @@ public class TucilWeka {
     */
     public void train() {
         try {
-            j48Classifier.buildClassifier(inputDataSet);
+            j48Classifier.buildClassifier(outputDataSet);
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -129,8 +129,8 @@ public class TucilWeka {
         try {
             J48 tree = new J48();
             
-            Evaluation eval = new Evaluation(inputDataSet);
-            eval.crossValidateModel(tree, inputDataSet, 10, new Random(1));
+            Evaluation eval = new Evaluation(outputDataSet);
+            eval.crossValidateModel(tree, outputDataSet, 10, new Random(1));
             System.out.println(eval.toSummaryString());
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
@@ -139,9 +139,9 @@ public class TucilWeka {
     
     public void fullTrainingEvaluation () {
         try {
-            Instances test = inputDataSet;
+            Instances test = outputDataSet;
             
-            Evaluation eval = new Evaluation(inputDataSet);
+            Evaluation eval = new Evaluation(outputDataSet);
             
             eval.evaluateModel(j48Classifier, test);
             System.out.println(eval.toSummaryString("\nResults\n======\n", false));
@@ -206,7 +206,9 @@ public class TucilWeka {
         TucilWeka test = new TucilWeka();
         
         try {
-            test.loadData();
+            Scanner sc = new Scanner(System.in);
+            System.out.print("File to load : ");
+            test.loadData(sc.nextLine());
 
             test.discretizeData();
             
@@ -223,8 +225,17 @@ public class TucilWeka {
             //baca instans baru
             
             //klasifikasi
+            System.out.print("Model to save : ");
+            test.saveModels(sc.nextLine());
             
-            test.saveData();
+            System.out.print("1 for full or 2 for tenFold : ");
+            if(sc.nextInt()==1) {
+                System.out.println("Doing full training evaluation : ");
+                test.fullTrainingEvaluation();
+            } else {
+                System.out.println("Doing tenFoldEvaluation : ");
+                test.tenFoldEvaluation();
+            }
         } catch (FileNotFoundException ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
