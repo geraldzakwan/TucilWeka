@@ -1,35 +1,35 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package tucilweka;
 
+//Import untuk std I/O, FIle I/O, Exception Logging, dan Random
+import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Random;
 
+//Impport untuk fungsi Weka secara umum seperti
+//instances, save file arff, dan data source
 import weka.core.*;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.ConverterUtils.DataSource;
-import weka.classifiers.Evaluation;
-import weka.classifiers.trees.J48;
 
+//Import untuk preprocessor filter
 import weka.filters.Filter;
-import weka.filters.unsupervised.attribute.Discretize;
 
-import java.util.Scanner;
+//Import untuk classifier secara umum dan dua jenis classifier yakni J48 dan MLP
 import weka.classifiers.Classifier;
+import weka.classifiers.trees.J48;
+import weka.classifiers.functions.MultilayerPerceptron;
 
+//Import untuk evaluasi model pembelajaran
+import weka.classifiers.Evaluation;
 /**
  *
  * @author Geraldi Dzakwan
+ * @author M. Reza Ramadhan
  */
 public class TucilWeka {
     
@@ -37,22 +37,24 @@ public class TucilWeka {
     Instances inputDataSet;
     Instances outputDataSet;
     Classifier j48Classifier;
+    Classifier MLP;
+    int cType;
+    Scanner sc;
+    
+    weka.filters.unsupervised.attribute.Discretize unSuperDisc;
+    weka.filters.supervised.attribute.Discretize superDisc;
     
     public TucilWeka() {
         j48Classifier = new J48();
+        MLP = new MultilayerPerceptron();
+        sc = new Scanner(System.in);
     }
     
     public void loadData(String loadFilePath) throws FileNotFoundException {
-//        String loadFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/iris.arff";
-        //String loadFilePath = "iris.arff";
         try {
             dataSource = new DataSource(loadFilePath);
             inputDataSet = dataSource.getDataSet();
-            inputDataSet.setClassIndex(inputDataSet.numAttributes() - 1);
-
-            //Ini kalo instances langsung
-            //Instances inputDataSet = new Instances(new BufferedReader(new FileReader(loadFilePath)));            
-            
+            inputDataSet.setClassIndex(inputDataSet.numAttributes() - 1);            
             System.out.println(inputDataSet.toSummaryString());
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
@@ -82,7 +84,6 @@ public class TucilWeka {
         s3 = "-M";
         
         String v1 = "", v2 = "", v3 = "";
-//        Scanner sc = new Scanner(System.in);
         
 //        System.out.print("-R : ");
 //        v1 = sc.nextLine();
@@ -104,11 +105,11 @@ public class TucilWeka {
         settings[4] = s3;
         settings[5] = v3;
         
-        Discretize disc = new Discretize();
+        unSuperDisc = new weka.filters.unsupervised.attribute.Discretize();
         try {
-            disc.setOptions(settings);
-            disc.setInputFormat(inputDataSet);
-            outputDataSet = Filter.useFilter(inputDataSet, disc);
+            unSuperDisc.setOptions(settings);
+            unSuperDisc.setInputFormat(inputDataSet);
+            outputDataSet = Filter.useFilter(inputDataSet, unSuperDisc);
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -119,7 +120,14 @@ public class TucilWeka {
     */
     public void train() {
         try {
-            j48Classifier.buildClassifier(outputDataSet);
+            System.out.print("Classifier? 1 for j48, 2 for MLP : "); 
+            cType = sc.nextInt();
+            if(sc.nextInt()==1) {
+                j48Classifier.buildClassifier(outputDataSet);
+            } else {
+                MLP.buildClassifier(outputDataSet);
+            }
+            
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -127,10 +135,14 @@ public class TucilWeka {
     
     public void tenFoldEvaluation () {
         try {
-            J48 tree = new J48();
-            
             Evaluation eval = new Evaluation(outputDataSet);
-            eval.crossValidateModel(tree, outputDataSet, 10, new Random(1));
+            if (cType==1) {
+                J48 tree = new J48();
+                eval.crossValidateModel(tree, outputDataSet, 10, new Random(1));
+            } else {
+                MultilayerPerceptron mlp = new MultilayerPerceptron();
+                eval.crossValidateModel(mlp, outputDataSet, 10, new Random(1));
+            }
             System.out.println(eval.toSummaryString());
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
@@ -143,7 +155,12 @@ public class TucilWeka {
             
             Evaluation eval = new Evaluation(outputDataSet);
             
-            eval.evaluateModel(j48Classifier, test);
+            if(cType==1) {
+                eval.evaluateModel(j48Classifier, test);
+            } else {
+                eval.evaluateModel(MLP, test);
+            }
+            
             System.out.println(eval.toSummaryString("\nResults\n======\n", false));
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
