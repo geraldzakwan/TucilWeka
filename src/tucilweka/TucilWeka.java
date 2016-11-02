@@ -31,87 +31,137 @@ import weka.classifiers.Evaluation;
  * @author Geraldi Dzakwan
  * @author M. Reza Ramadhan
  */
+//Kelas Java yang diimplementasikan
 public class TucilWeka {
     
+    //Untuk mengambil dataset dari file eksternal
     DataSource dataSource;
+    //Input dataset
     Instances inputDataSet;
-    Instances outputDataSet;
+    //Dataset yang sudah di-filter
+    Instances filteredDataSet;
+   
+    //Nanti ini diapus
     Classifier j48Classifier;
     Classifier MLP;
+    
+    //Variabel classifier
+    Classifier classifier;
+    //Menyatakan classifier jenis apa 
     int cType;
+    
+    //Stdin
     Scanner sc;
     
+    //Filter yang digunakan yakni supervised & unsupervised discretize
     weka.filters.unsupervised.attribute.Discretize unSuperDisc;
     weka.filters.supervised.attribute.Discretize superDisc;
     
+    //Konstruktor
     public TucilWeka() {
-        j48Classifier = new J48();
-        MLP = new MultilayerPerceptron();
+        //Inisialisasi scanner
+        //j48Classifier = new J48();
+        //MLP = new MultilayerPerceptron();
         sc = new Scanner(System.in);
     }
     
+    //Load unfiltered dataset
     public void loadData(String loadFilePath) throws FileNotFoundException {
         try {
+            //Mengambil data source dari file arff
             dataSource = new DataSource(loadFilePath);
+            //Mengambil dataset dari data source
             inputDataSet = dataSource.getDataSet();
-            inputDataSet.setClassIndex(inputDataSet.numAttributes() - 1);            
+            //Mengeset bahwa atribut kelas/klasifikasi ada di atribut paling akhir
+            inputDataSet.setClassIndex(inputDataSet.numAttributes() - 1);
+            //Output info dari dataset
             System.out.println(inputDataSet.toSummaryString());
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
+    //Save filtered dataset
     public void saveData(String saveFilePath) {
+        //Membuat variabel saver
         ArffSaver aSaver = new ArffSaver();
-        aSaver.setInstances(outputDataSet);
-//        String saveFilePath = "C:/Users/ASUS/Documents/NetBeansProjects/TucilWeka/src/tucilweka/saved.arff";
-        //String saveFilePath = "saved.arff";
+        //Mengeset instance menjadi filtered dataset
+        aSaver.setInstances(filteredDataSet);
         try {
+            //Mengeset filepath dan namafile
             aSaver.setFile(new File(saveFilePath));
+            //Write ke disk
             aSaver.writeBatch();
         } catch (IOException ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
+    //Melakukan filter dataset menggunakan discretize
     public void discretizeData() {
-        int numberOfSettings = 3;
-        numberOfSettings*=2;
-        String[] settings = new String[numberOfSettings];
-        
-        String s1 = "-R", 
-        s2 = "-B", 
-        s3 = "-M";
-        
-        String v1 = "", v2 = "", v3 = "";
-        
-//        System.out.print("-R : ");
-//        v1 = sc.nextLine();
-//        
-//        System.out.print("-B : ");
-//        v2 = sc.nextLine();
-//        
-//        System.out.print("-M : ");
-//        v3 = sc.nextLine();
+        //Menentukan filter apa yang digunakan (supervised/unsupervised)
+        System.out.println("Supervised (1) atau unsupervised (2) discretize : ");
+        int numberOfSettings;
+        String[] settings;
+        if(sc.nextInt()==2) {
+            numberOfSettings = 3;
+            settings = new String[numberOfSettings*2];
 
-        v1 = "first-last";
-        v2 = "10";
-        v3 = "-1";
-        
-        settings[0] = s1;
-        settings[1] = v1;
-        settings[2] = s2;
-        settings[3] = v2;
-        settings[4] = s3;
-        settings[5] = v3;
-        
-        unSuperDisc = new weka.filters.unsupervised.attribute.Discretize();
-        try {
-            unSuperDisc.setOptions(settings);
-            unSuperDisc.setInputFormat(inputDataSet);
-            outputDataSet = Filter.useFilter(inputDataSet, unSuperDisc);
-        } catch (Exception ex) {
-            Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
+            String s1 = "-R", 
+            s2 = "-B", 
+            s3 = "-M";
+            String v1 = "", v2 = "", v3 = "";
+
+            System.out.print("-R : ");
+            //v1 = "first-last";
+            v1 = sc.nextLine();
+      
+            System.out.print("-B : ");
+            //v2 = "10";
+            v2 = sc.nextLine();
+            
+            System.out.print("-M : ");
+            //v3 = "-1";
+            v3 = sc.nextLine();
+
+            settings[0] = s1;
+            settings[1] = v1;
+            settings[2] = s2;
+            settings[3] = v2;
+            settings[4] = s3;
+            settings[5] = v3;
+            
+            unSuperDisc = new weka.filters.unsupervised.attribute.Discretize();
+            try {
+                unSuperDisc.setOptions(settings);
+                unSuperDisc.setInputFormat(inputDataSet);
+                filteredDataSet = Filter.useFilter(inputDataSet, unSuperDisc);
+            } catch (Exception ex) {
+                Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } else {
+            numberOfSettings = 1;
+            settings = new String[numberOfSettings*2];
+
+            String s1 = "-R";
+            //v1 = first-last
+            String v1 = "";
+
+            System.out.print("-R : ");
+            //v1 = "first-last";
+            v1 = sc.nextLine();
+
+            settings[0] = s1;
+            settings[1] = v1;
+            
+            superDisc = new weka.filters.supervised.attribute.Discretize();
+            try {
+                superDisc.setOptions(settings);
+                superDisc.setInputFormat(inputDataSet);
+                filteredDataSet = Filter.useFilter(inputDataSet, superDisc);
+            } catch (Exception ex) {
+                Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
     
@@ -122,10 +172,14 @@ public class TucilWeka {
         try {
             System.out.print("Classifier? 1 for j48, 2 for MLP : "); 
             cType = sc.nextInt();
-            if(sc.nextInt()==1) {
-                j48Classifier.buildClassifier(outputDataSet);
+            if(cType==1) {
+                classifier = new J48();
+                //j48Classifier.buildClassifier(filteredDataSet);
+                classifier.buildClassifier(filteredDataSet);
             } else {
-                MLP.buildClassifier(outputDataSet);
+                classifier = new MultilayerPerceptron();
+                //MLP.buildClassifier(filteredDataSet);
+                classifier.buildClassifier(filteredDataSet);
             }
             
         } catch (Exception ex) {
@@ -135,13 +189,13 @@ public class TucilWeka {
     
     public void tenFoldEvaluation () {
         try {
-            Evaluation eval = new Evaluation(outputDataSet);
+            Evaluation eval = new Evaluation(filteredDataSet);
             if (cType==1) {
                 J48 tree = new J48();
-                eval.crossValidateModel(tree, outputDataSet, 10, new Random(1));
+                eval.crossValidateModel(tree, filteredDataSet, 10, new Random(1));
             } else {
                 MultilayerPerceptron mlp = new MultilayerPerceptron();
-                eval.crossValidateModel(mlp, outputDataSet, 10, new Random(1));
+                eval.crossValidateModel(mlp, filteredDataSet, 10, new Random(1));
             }
             System.out.println(eval.toSummaryString());
         } catch (Exception ex) {
@@ -151,15 +205,18 @@ public class TucilWeka {
     
     public void fullTrainingEvaluation () {
         try {
-            Instances test = outputDataSet;
+            Instances test = filteredDataSet;
             
-            Evaluation eval = new Evaluation(outputDataSet);
+            Evaluation eval = new Evaluation(filteredDataSet);
+            eval.evaluateModel(classifier, test);
             
+            /*
             if(cType==1) {
                 eval.evaluateModel(j48Classifier, test);
             } else {
                 eval.evaluateModel(MLP, test);
             }
+            */
             
             System.out.println(eval.toSummaryString("\nResults\n======\n", false));
         } catch (Exception ex) {
@@ -192,7 +249,8 @@ public class TucilWeka {
     
     public void saveModels(String path) {
         try {
-            SerializationHelper.write(path, j48Classifier);
+            //SerializationHelper.write(path, j48Classifier);
+            SerializationHelper.write(path, classifier);
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -200,7 +258,8 @@ public class TucilWeka {
     
     public void loadModels(String path) {
         try {
-            j48Classifier = (Classifier) weka.core.SerializationHelper.read(path);
+            //j48Classifier = (Classifier) weka.core.SerializationHelper.read(path);
+            classifier = (Classifier) weka.core.SerializationHelper.read(path);
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -208,7 +267,8 @@ public class TucilWeka {
     
     public void classifyInstance(Instance inst) {
         try {
-            double classLabel = j48Classifier.classifyInstance(inst);
+            //double classLabel = j48Classifier.classifyInstance(inst);
+            double classLabel = classifier.classifyInstance(inst);
             inst.setClassValue(classLabel);
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
