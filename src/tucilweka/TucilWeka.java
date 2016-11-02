@@ -100,9 +100,8 @@ public class TucilWeka {
     }
     
     //Melakukan filter dataset menggunakan discretize
-    public Instances discretizeData(Instances arrInst) throws Exception  {
+    public void discretizeData() {
         //Menentukan filter apa yang digunakan (supervised/unsupervised)
-        Instances retVal = dataSource.getDataSet();
         System.out.println("Supervised (1) atau unsupervised (2) discretize : ");
         int numberOfSettings;
         String[] settings;
@@ -137,8 +136,8 @@ public class TucilWeka {
             unSuperDisc = new weka.filters.unsupervised.attribute.Discretize();
             try {
                 unSuperDisc.setOptions(settings);
-                unSuperDisc.setInputFormat(arrInst);
-                retVal = Filter.useFilter(arrInst, unSuperDisc);
+                unSuperDisc.setInputFormat(inputDataSet);
+                filteredDataSet = Filter.useFilter(inputDataSet, unSuperDisc);
             } catch (Exception ex) {
                 Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -160,13 +159,12 @@ public class TucilWeka {
             superDisc = new weka.filters.supervised.attribute.Discretize();
             try {
                 superDisc.setOptions(settings);
-                superDisc.setInputFormat(arrInst);
-                retVal = Filter.useFilter(arrInst, superDisc);
+                superDisc.setInputFormat(inputDataSet);
+                filteredDataSet = Filter.useFilter(inputDataSet, superDisc);
             } catch (Exception ex) {
                 Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        return retVal;
     }
     
     /*
@@ -277,23 +275,18 @@ public class TucilWeka {
             for (int i = 0; i < inputDataSet.numAttributes(); i++) {
                 atts.add(inputDataSet.attribute(i).copy(inputDataSet.attribute(i).name()));
             }
-            System.out.println("Oi : " + atts.size());
+            
             
             unsetData = new Instances("TestInstances", atts, 0);
-            unsetData.setClassIndex(inputDataSet.numAttributes() - 1);
-            
-            inst.setClassValue("Iris-virginica");
             unsetData.add(inst);
-            
-            unsetData = discretizeData(unsetData);
             unsetData.setClassIndex(inputDataSet.numAttributes() - 1);
-            
             inst.setDataset(unsetData);
+            
             //System.out.println(classifier);
             
-            double classLabel = classifier.classifyInstance(unsetData.firstInstance());
+            double classLabel = classifier.classifyInstance(inst);
             inst.setClassValue(classLabel);
-            System.out.println(inst.numAttributes());
+            System.out.println(inst);
             
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
@@ -312,7 +305,7 @@ public class TucilWeka {
             System.out.print("File to load : ");
             test.loadData(sc.nextLine());
 
-            test.filteredDataSet = test.discretizeData(test.inputDataSet);
+            test.discretizeData();
             
             test.train();
             
