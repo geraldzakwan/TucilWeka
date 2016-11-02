@@ -46,7 +46,7 @@ public class TucilWeka {
     
     public void saveData(String saveFilePath) {
         ArffSaver aSaver = new ArffSaver();
-        aSaver.setInstances(inputDataSet);
+        aSaver.setInstances(filteredDataSet);
         try {
             aSaver.setFile(new File(saveFilePath));
             aSaver.writeBatch();
@@ -56,7 +56,7 @@ public class TucilWeka {
     }
     
     public void discretizeData() {
-        System.out.print("Supervised (1) or unsupervised (2) discretize : ");
+        System.out.println("Supervised (1) atau unsupervised (2) discretize : ");
         int numberOfSettings;
         String[] settings;
         if(sc.nextInt()==2) {
@@ -88,6 +88,9 @@ public class TucilWeka {
                 unSuperDisc.setOptions(settings);
                 unSuperDisc.setInputFormat(inputDataSet);
                 filteredDataSet = Filter.useFilter(inputDataSet, unSuperDisc);
+                System.out.println("Discretization result: ");
+                System.out.println("=======================");
+                System.out.println(filteredDataSet.toSummaryString());
             } catch (Exception ex) {
                 Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -115,8 +118,7 @@ public class TucilWeka {
     }
     
     public Instance discretizeInstance(Instance inst) {
-        System.out.println();
-        System.out.print("Supervised (1) or unsupervised (2) discretize : ");
+        System.out.println("Supervised (1) atau unsupervised (2) discretize : ");
         int numberOfSettings;
         String[] settings;
         if(sc.nextInt()==2) {
@@ -143,26 +145,12 @@ public class TucilWeka {
             settings[4] = s3;
             settings[5] = v3;
             
-            /*
             weka.filters.unsupervised.attribute.Discretize unsuper = new weka.filters.unsupervised.attribute.Discretize();
             inst.setDataset(inputDataSet);
             try {
                 unsuper.setInputFormat(inputDataSet);
                 if(unsuper.input(inst)) {
                     inst = unsuper.output();
-                }
-            } catch (Exception ex) {
-                Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            */
-            unSuperDisc = new weka.filters.unsupervised.attribute.Discretize();
-            try {
-                unSuperDisc.setOptions(settings);
-                unSuperDisc.setInputFormat(inputDataSet);
-                Filter.useFilter(inputDataSet, unSuperDisc);
-                
-                if(unSuperDisc.input(inst)) {
-                    inst = unSuperDisc.output();
                 }
             } catch (Exception ex) {
                 Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
@@ -179,27 +167,12 @@ public class TucilWeka {
             settings[0] = s1;
             settings[1] = v1;
             
-            /*
             weka.filters.supervised.attribute.Discretize sd = new weka.filters.supervised.attribute.Discretize();
             inst.setDataset(inputDataSet);
             try {
                 sd.setInputFormat(inputDataSet);
                 if(sd.input(inst)) {
                     inst = sd.output();
-                }
-            } catch (Exception ex) {
-                Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
-            }            
-            */
-            
-            superDisc = new weka.filters.supervised.attribute.Discretize();
-            try {
-                superDisc.setOptions(settings);
-                superDisc.setInputFormat(inputDataSet);
-                Filter.useFilter(inputDataSet, superDisc);
-                
-                if(superDisc.input(inst)) {
-                    inst = superDisc.output();
                 }
             } catch (Exception ex) {
                 Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
@@ -221,6 +194,7 @@ public class TucilWeka {
                 classifier = new J48();
             }
             classifier.buildClassifier(filteredDataSet);
+            System.out.println(classifier);
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -239,7 +213,11 @@ public class TucilWeka {
                 J48 tree = new J48();
                 eval.crossValidateModel(tree, filteredDataSet, 10, new Random(1));
             }
+            System.out.println("10-fold Cross Validation Evaluation Result");
+            System.out.println("==========================================");
             System.out.println(eval.toSummaryString());
+            System.out.println(eval.toClassDetailsString());
+            System.out.println(eval.toMatrixString());
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -251,8 +229,12 @@ public class TucilWeka {
             
             Evaluation eval = new Evaluation(filteredDataSet);
             eval.evaluateModel(classifier, test);
-            
-            System.out.println(eval.toSummaryString("\nResults\n======\n", false));
+
+            System.out.println("Full training Evaluation Result");
+            System.out.println("===============================");            
+            System.out.println(eval.toSummaryString());
+            System.out.println(eval.toClassDetailsString());
+            System.out.println(eval.toMatrixString());
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -269,6 +251,7 @@ public class TucilWeka {
     public void loadModels(String path) {
         try {
             classifier = (Classifier) weka.core.SerializationHelper.read(path);
+            System.out.println(classifier);
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -281,9 +264,8 @@ public class TucilWeka {
         String in;
         
         for (int i = 0; i<classIndex; i++) {
-            int j = i + 1;
-            System.out.print("Attribute (" + j + ") value : ");
             Attribute att = inputDataSet.attribute(i);
+            System.out.print("Input values for " + att.name() + " : ");
             float val = sc.nextFloat();
             inst.setValue(att, val);
         }
@@ -294,8 +276,7 @@ public class TucilWeka {
         try {
             double kelas = classifier.classifyInstance(inst);
             inst.setClassValue(kelas);
-            System.out.println("Class prediction : " + inst.stringValue(inst.numAttributes()-1));
-            System.out.println();
+            System.out.println("Prediksi kelas : " + inst);
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -316,143 +297,67 @@ public class TucilWeka {
             System.out.println("-------------------------");
             
             //Model
-            System.out.println();
             System.out.print("Would you like to train(1) or load(2) model : ");
             
             if ("1".equals(sc.nextLine())) {
                 //Load file
-                System.out.println();
-                System.out.print("Specify dataset file name to load (.arff) : ");
+                System.out.print("Specify file to load : ");
                 test.loadData(sc.nextLine());
                 
                 //Discretize dataset
                 System.out.print("Would you like to discretize dataset (y/n) : ");
                 if ("y".equals(sc.nextLine())) {
-                    System.out.println();
                     test.discretizeData();
-                    System.out.println("Data is now discretized");
+                } else {
+                    
                 }
                 
                 //Train data
-                System.out.println();
                 System.out.println("Training data...");
                 test.train();
                 System.out.println("Model created...");
                 
                 //Save model 
-                System.out.println();
-                System.out.print("Would you like to save model (y/n) : ");
+                System.out.println("Would you like to save model : (y/n)");
                 if("y".equals(sc.nextLine())) {
-                    System.out.println();
-                    System.out.print("Specify model file name (.model) to save : ");
+                    System.out.println("Specify models name : ");
                     test.saveModels(sc.nextLine());
                 }
                 
                 //Evaluating model
-                System.out.println();
-                System.out.print("How would you like to evaluate model, full(1) 10-fold(2) : ");
+                System.out.println("How would you like to evaluate model, full(1) 10-fold(2) : ");
                 if("1".equals(sc.nextLine())) {
-                    System.out.println();
                     System.out.println("Doing full training evaluation : ");
                     test.fullTrainingEvaluation();
                 } else {
-                    System.out.println();
                     System.out.println("Doing tenFoldEvaluation : ");
                     test.tenFoldEvaluation();
                 }
                 
                 //Classification
-                String in = "";
-                do {
-                    System.out.println();
-                    System.out.print("Would you like to classify new instance (y/n) : ");
-                    in = sc.nextLine();
-                    if("y".equals(in)) {
-                        Instance i = test.askInstancesFromUser();
-                        Instance temp = i;
-                        System.out.println();
-                        System.out.print("Is your dataset discretized before? (y/n) : ");
-                        if("y".equals(sc.nextLine())) {
-                            i = test.discretizeInstance(i);
-                        }
-
-                        System.out.println();
-                        i.setDataset(test.inputDataSet);
-                        test.classifyInstance(i);
-
-                        //Save new instance
-                        temp.setDataset(test.inputDataSet);
-                        temp.setClassValue(i.stringValue(i.numAttributes()-1));
-                        System.out.print("Would you like to add this new instance to the dataset? (y/n) : ");
-                        Scanner sc2 = new Scanner(System.in);
-                        String in2 = sc2.nextLine();
-                        if("y".equals(in2)) {
-                            test.inputDataSet.add(temp);
-                            System.out.println("Instances added");
-                            System.out.println();
-                            System.out.print("Would you like to save this new dataset to arff file (y/n) : ");
-                            String in3 = sc2.nextLine();
-                            if ("y".equals(in3)) {
-                                System.out.println();
-                                System.out.print("Specify dataset file name (.arff) to save : ");
-                                test.saveData(sc2.nextLine());
-                                System.out.println("File saved");
-                            }
-                        }
-                    }
-                } while ("y".equals(in));
+                System.out.println("Would you like to classify new instance : (y/n)");
+                if("y".equals(sc.nextLine())) {
+                    Instance i = test.askInstancesFromUser();
+                    i = test.discretizeInstance(i);
+                    test.classifyInstance(i);
+                    sc.nextLine();
+                }
             } else {
                 //Load file
-                System.out.println();
-                System.out.print("Specify dataset file name to load (.arff) : ");
-                String inputDataSet = sc.nextLine();
-                test.loadData(inputDataSet);
+                System.out.print("Specify file to load : ");
+                test.loadData(sc.nextLine());
                 
                 //Load model 
-                System.out.println();
-                System.out.print("Specify model file name to load (.model) : ");
+                System.out.println("Specify models name : ");
                 test.loadModels(sc.nextLine());
                 
                 //Classification
-                String in = "";
-                do {
-                    System.out.println();
-                    System.out.print("Would you like to classify new instance (y/n) : ");
-                    in = sc.nextLine();
-                    if("y".equals(in)) {
-                        Instance i = test.askInstancesFromUser();
-                        Instance temp = i;
-                        System.out.println();
-                        System.out.print("Is your dataset discretized before? (y/n) : ");
-                        if("y".equals(sc.nextLine())) {
-                            i = test.discretizeInstance(i);
-                        }
-
-                        System.out.println();
-                        i.setDataset(test.inputDataSet);
-                        test.classifyInstance(i);
-
-                        //Save new instance
-                        temp.setDataset(test.inputDataSet);
-                        temp.setClassValue(i.stringValue(i.numAttributes()-1));
-                        System.out.print("Would you like to add this new instance to the dataset? (y/n) : ");
-                        Scanner sc2 = new Scanner(System.in);
-                        String in2 = sc2.nextLine();
-                        if("y".equals(in2)) {
-                            test.inputDataSet.add(temp);
-                            System.out.println("Instances added");
-                            System.out.println();
-                            System.out.print("Would you like to save this new dataset to arff file (y/n) : ");
-                            String in3 = sc2.nextLine();
-                            if ("y".equals(in3)) {
-                                System.out.println();
-                                System.out.print("Specify dataset file name (.arff) to save : ");
-                                test.saveData(sc2.nextLine());
-                                System.out.println("File saved");
-                            }
-                        }
-                    }
-                } while ("y".equals(in));
+                System.out.println("Would you like to classify new instance : (y/n)");
+                if("y".equals(sc.nextLine())) {
+                    Instance i = test.askInstancesFromUser();
+                    i = test.discretizeInstance(i);
+                    test.classifyInstance(i);
+                }
             }
         } catch (FileNotFoundException ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
