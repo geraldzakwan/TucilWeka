@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Random;
@@ -40,7 +41,8 @@ public class TucilWeka {
     Instances inputDataSet;
     //Dataset yang sudah di-filter
     Instances filteredDataSet;
-   
+    //Dataset unclassified
+    Instances unsetData;
     //Nanti ini diapus
     Classifier j48Classifier;
     Classifier MLP;
@@ -242,6 +244,7 @@ public class TucilWeka {
             } else if (a.isNumeric()) { //real values, ex: 5.2, 3.1
                 inst.setValue(a, Float.parseFloat(in));
             }
+            
         }
         
         return inst;
@@ -268,8 +271,23 @@ public class TucilWeka {
     public void classifyInstance(Instance inst) {
         try {
             //double classLabel = j48Classifier.classifyInstance(inst);
+            ArrayList<Attribute> atts = new ArrayList<Attribute>();
+            for (int i = 0; i < inputDataSet.numAttributes(); i++) {
+                atts.add(inputDataSet.attribute(i).copy(inputDataSet.attribute(i).name()));
+            }
+            
+            
+            unsetData = new Instances("TestInstances", atts, 0);
+            unsetData.add(inst);
+            unsetData.setClassIndex(inputDataSet.numAttributes() - 1);
+            inst.setDataset(unsetData);
+            
+            //System.out.println(classifier);
+            
             double classLabel = classifier.classifyInstance(inst);
             inst.setClassValue(classLabel);
+            System.out.println(inst);
+            
         } catch (Exception ex) {
             Logger.getLogger(TucilWeka.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -291,6 +309,8 @@ public class TucilWeka {
             
             test.train();
             
+            Instance i = test.askInstancesFromUser();
+            test.classifyInstance(i);
             //pilih either fulltraining atau 10-fold
             
             //buat hipotesis
